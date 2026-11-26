@@ -1,0 +1,1164 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Фотографии автозапчастей по артикулам. Оригинальные запчасти и аналоги.">
+<title>Фото автозапчастей по артикулам</title>
+<link rel="icon" href="data:,">
+<style>
+:root {
+  color-scheme: light;
+  --paper: #f5f4f0;
+  --white: #fff;
+  --ink: #172220;
+  --sub: #52615e;
+  --line: #dde3dc;
+  --accent: #16574b;
+  --pale: #e5f1eb;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.5;
+}
+main { width: min(960px, 100% - 48px); margin: 0 auto 56px; }
+header { padding: 39px 0 23px; }
+h1 { margin: 0; font-size: clamp(24px, 5.4vw, 40px); line-height: 1.17; letter-spacing: -.035em; }
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  background: var(--paper);
+  padding: 10px 0 14px;
+}
+.toolbar[hidden], .part[hidden], .empty[hidden] { display: none; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.filters button, input {
+  min-height: 44px;
+  font: inherit;
+  border: 1px solid #c8d2cb;
+  border-radius: 9px;
+  background: var(--white);
+  color: var(--ink);
+}
+.filters button { padding: 0 12px; white-space: nowrap; cursor: pointer; }
+.filters button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--white); }
+.filters button:hover:not([aria-pressed="true"]) { border-color: var(--accent); background: var(--pale); }
+.count { margin-left: 3px; opacity: .85; font-variant-numeric: tabular-nums; }
+input { flex: 1 1 200px; min-width: 0; padding: 0 13px; }
+input::placeholder { color: var(--sub); opacity: 1; }
+:focus-visible { outline: 3px solid #126759; outline-offset: 3px; }
+.parts { margin: 0; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 13px; overflow: hidden; background: var(--white); }
+.parts:has(.part[hidden]):not(:has(.part:not([hidden]))) { display: none; }
+.part {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(132px, 42%);
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  min-height: 158px;
+  padding: 12px 18px 12px 22px;
+}
+.part:not([hidden]) ~ .part:not([hidden]) { border-top: 1px solid var(--line); }
+.details { min-width: 0; }
+.classification { display: block; color: var(--sub); font-size: .86rem; overflow-wrap: anywhere; }
+.brand { font-weight: 650; }
+.number {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font: 650 clamp(16px, 2.6vw, 24px)/1.2 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  margin: 3px 0;
+}
+.source { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent); font-size: .875rem; text-underline-offset: 3px; padding-inline-end: 5px; }
+.photo {
+  display: grid;
+  place-items: center;
+  height: 148px;
+  border-radius: 8px;
+  background: #f8f8f6;
+  overflow: hidden;
+}
+.photo img { display: block; width: 100%; height: 100%; min-height: 0; object-fit: contain; }
+.photo:focus-visible { outline-offset: -3px; }
+.photo:hover { box-shadow: inset 0 0 0 1px var(--accent); }
+.empty { padding: 16px 18px; margin: 0; border: 1px solid var(--line); border-radius: 13px; background: var(--white); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+@media (max-width: 590px) {
+  main { width: calc(100% - 24px); margin-bottom: 30px; }
+  header { padding: 24px 0 12px; }
+  .toolbar { gap: 8px; padding-top: 6px; padding-bottom: 10px; }
+  .filters button { font-size: .84rem; padding-inline: 9px; }
+  input { flex-basis: 100%; }
+  .part { gap: 10px; min-height: 115px; padding: 9px 10px 9px 12px; }
+  .classification { font-size: .75rem; }
+  .photo { height: 98px; }
+}
+</style>
+</head>
+<body>
+<main>
+  <header><h1>Фото автозапчастей</h1></header>
+  <div class="toolbar" id="toolbar" hidden>
+    <div class="filters" role="group" aria-label="Группа запчастей">
+      <button type="button" data-filter="all" aria-pressed="true">Все <span class="count">100</span></button>
+      <button type="button" data-filter="original" aria-pressed="false">Оригинал <span class="count">50</span></button>
+      <button type="button" data-filter="aftermarket" aria-pressed="false">Неоригинал <span class="count">50</span></button>
+    </div>
+    <label class="sr-only" for="search">Поиск по артикулу или бренду</label>
+    <input id="search" type="search" placeholder="Поиск по артикулу или бренду" autocomplete="off">
+  </div>
+  <p class="sr-only" id="status" role="status"></p>
+  <p class="empty" id="empty" hidden>Совпадений нет. Проверьте артикул или выберите другую группу.</p>
+  <ul class="parts" aria-label="Артикулы с фотографиями">
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">0446534040</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/pad-kit-0446534040/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 0446534040">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/FRONT-BRAKE-PADS-17047.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 0446534040">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/FRONT-BRAKE-PADS-17047.webp" alt="Toyota 0446534040" fetchpriority="high" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">04465K0020</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/pad-kit-disc-brake-21-04465k0020/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 04465K0020">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2025/12/PAD-KIT-DISC-BRAKE-17048-scaled.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 04465K0020">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2025/12/PAD-KIT-DISC-BRAKE-17048-scaled.webp" alt="Toyota 04465K0020" fetchpriority="high" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">0446660080</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/pad-kit-disc-brake-11-0446660080/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 0446660080">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/REAR-BRAKE-PADS-12977.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 0446660080">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/REAR-BRAKE-PADS-12977.webp" alt="Toyota 0446660080" fetchpriority="high" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">0446660161</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/pad-kit-disc-brake-13-0446660161/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 0446660161">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/04/REAR-BRAKE-PADS-12978-scaled.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 0446660161">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/04/REAR-BRAKE-PADS-12978-scaled.webp" alt="Toyota 0446660161" fetchpriority="high" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">0449526240</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/shoe-kit-brake-rr-3-0449526240/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 0449526240">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/04/SHOE-KIT-BRAKE-RR-12986-scaled.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 0449526240">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/04/SHOE-KIT-BRAKE-RR-12986-scaled.webp" alt="Toyota 0449526240" fetchpriority="high" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">0494633070</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/shim-kit-anti-2-0494633070/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 0494633070">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/05/SHIM-KIT-ANTI-12989.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 0494633070">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/05/SHIM-KIT-ANTI-12989.webp" alt="Toyota 0494633070" fetchpriority="high" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">4243133130</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/disc-rr-9-4243133130/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 4243133130">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/06/DISC-RR-14149.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 4243133130">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/06/DISC-RR-14149.webp" alt="Toyota 4243133130" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">435120E030</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/disc-fr-22-435120e030/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 435120E030">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2025/12/DISC-FR-17591-scaled.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 435120E030">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2025/12/DISC-FR-17591-scaled.webp" alt="Toyota 435120E030" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">4351248110</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/disc-fr-24-4351248110/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 4351248110">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2025/12/DISC-FR-18046-scaled.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 4351248110">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2025/12/DISC-FR-18046-scaled.webp" alt="Toyota 4351248110" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">475500K010</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/cylinder-assy-wheel-2-475500k010/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 475500K010">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/04/CYLINDER-ASSY-WHEEL-HILUX-475500K010-16926-scaled.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 475500K010">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/04/CYLINDER-ASSY-WHEEL-HILUX-475500K010-16926-scaled.webp" alt="Toyota 475500K010" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">4783042100</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/cylinder-assy-rr-2-4783042100/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 4783042100">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/05/CYLINDER-ASSY-RR-14265.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 4783042100">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/05/CYLINDER-ASSY-RR-14265.webp" alt="Toyota 4783042100" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">9094702J69</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/hose-flexible-5-9094702j69/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 9094702J69">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/HOSE-FLEXIBLE-16192.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 9094702J69">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/HOSE-FLEXIBLE-16192.webp" alt="Toyota 9094702J69" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">5590589110</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/knob-2-5590589110/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 5590589110">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/KNOB-19373.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 5590589110">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/KNOB-19373.webp" alt="Toyota 5590589110" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">885150K580</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/valve-expansion-no-885150k580-885150k580/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 885150K580">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/VALVE-EXPANSION-NO-885150K580-20188.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 885150K580">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/VALVE-EXPANSION-NO-885150K580-20188.webp" alt="Toyota 885150K580" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">8871852280</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/clamp-piping-8871852280-8871852280/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 8871852280">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/CLAMP-PIPING-8871852280-20464.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 8871852280">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/CLAMP-PIPING-8871852280-20464.webp" alt="Toyota 8871852280" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">1115936011</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/gasket-camshaft-1115936011-1115936011/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 1115936011">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/GASKET-CAMSHAFT-1115936011-20025.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 1115936011">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/GASKET-CAMSHAFT-1115936011-20025.webp" alt="Toyota 1115936011" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">1236130143</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/insulator-engine-9-1236130143/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 1236130143">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/INSULATOR-ENGINE-18936.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 1236130143">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/INSULATOR-ENGINE-18936.webp" alt="Toyota 1236130143" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">1350546041</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/idler-sub-assy-4-1350546041/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 1350546041">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/09/Timing-Belt-Idler-Sub-Assy-1JZ2JZ-22718.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 1350546041">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/09/Timing-Belt-Idler-Sub-Assy-1JZ2JZ-22718.webp" alt="Toyota 1350546041" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">1354046030</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/tensioner-assy-12-1354046030/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 1354046030">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/09/Tensioner-Assy-1JZ2JZ-22716.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 1354046030">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/09/Tensioner-Assy-1JZ2JZ-22716.webp" alt="Toyota 1354046030" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">13568YZZ14</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/timing-belt-13568yzz14/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 13568YZZ14">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/09/Timing-Belt-2JZ-GE-22714.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 13568YZZ14">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/09/Timing-Belt-2JZ-GE-22714.webp" alt="Toyota 13568YZZ14" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">1540730070</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/pipe-sub-assy-turbo-1540730070-1540730070/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 1540730070">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/PIPE-SUB-ASSY-TURBO-1540730070-20401.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 1540730070">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/PIPE-SUB-ASSY-TURBO-1540730070-20401.webp" alt="Toyota 1540730070" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">1985011040</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/plug-assy-glow-1985011040/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 1985011040">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/PLUG-ASSY-GLOW-19002.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 1985011040">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/PLUG-ASSY-GLOW-19002.webp" alt="Toyota 1985011040" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">2561151020</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/pipe-egr-no-1-3-2561151020/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 2561151020">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/PIPE-EGR-NO.1-18906.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 2561151020">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/PIPE-EGR-NO.1-18906.webp" alt="Toyota 2561151020" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">8967471021</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/motor-turbocharger-8967471021/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 8967471021">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/MOTOR-TURBOCHARGER-19403.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 8967471021">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/MOTOR-TURBOCHARGER-19403.webp" alt="Toyota 8967471021" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">9091603144</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/thermostat-9091603144-9091603144/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 9091603144">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/THERMOSTAT-9091603144-20524.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 9091603144">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/THERMOSTAT-9091603144-20524.webp" alt="Toyota 9091603144" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">1780116020</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/element-sub-assy-3-1780116020/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 1780116020">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2025/12/ELEMENT-SUB-ASSY-13234-scaled.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 1780116020">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2025/12/ELEMENT-SUB-ASSY-13234-scaled.webp" alt="Toyota 1780116020" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">1780130040</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/element-sub-assy-18-1780130040/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 1780130040">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2025/12/ELEMENT-SUB-ASSY-13238-scaled.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 1780130040">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2025/12/ELEMENT-SUB-ASSY-13238-scaled.webp" alt="Toyota 1780130040" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">1780131180</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/element-sub-assy-air-cleaner-1780131180/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 1780131180">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/10/ELEMENT-SUB-ASSY-AIR-CLEANER-17996.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 1780131180">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/10/ELEMENT-SUB-ASSY-AIR-CLEANER-17996.webp" alt="Toyota 1780131180" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">1780162010</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/element-sub-assy-22-1780162010/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 1780162010">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2025/12/ELEMENT-SUB-ASSY-13242-scaled.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 1780162010">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2025/12/ELEMENT-SUB-ASSY-13242-scaled.webp" alt="Toyota 1780162010" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">1780175010</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/element-sub-assy-26-1780175010/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 1780175010">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2025/12/ELEMENT-SUB-ASSY-13246-scaled.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 1780175010">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2025/12/ELEMENT-SUB-ASSY-13246-scaled.webp" alt="Toyota 1780175010" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">2330031160</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/filter-assy-fuel-10-2330031160/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 2330031160">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/10/FILTER-ASSY-FUEL-17046.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 2330031160">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/10/FILTER-ASSY-FUEL-17046.webp" alt="Toyota 2330031160" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">871390C010</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/element-air-refiner-9-871390c010/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 871390C010">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2025/12/ELEMENT-AIR-REFINER-15694-scaled.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 871390C010">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2025/12/ELEMENT-AIR-REFINER-15694-scaled.webp" alt="Toyota 871390C010" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">8713958010</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/element-air-refiner-6-8713958010/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 8713958010">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2025/12/ELEMENT-AIR-REFINER-12617-scaled.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 8713958010">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2025/12/ELEMENT-AIR-REFINER-12617-scaled.webp" alt="Toyota 8713958010" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">9091510010</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/genuine-toyota-oil-filter-9091510010-9091510010/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 9091510010">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2025/08/9091510010-scaled.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 9091510010">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2025/08/9091510010-scaled.webp" alt="Toyota 9091510010" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">9091520005</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/filter-oil-2-9091520005/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 9091520005">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2025/12/FILTER-OIL-12732-scaled.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 9091520005">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2025/12/FILTER-OIL-12732-scaled.webp" alt="Toyota 9091520005" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">111590E010</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/gasket-camshaft-bea-111590e010/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 111590E010">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/06/GASKET-CAMSHAFT-BEA-16906.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 111590E010">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/06/GASKET-CAMSHAFT-BEA-16906.webp" alt="Toyota 111590E010" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">9010112165</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/bolt-hexagon-9010112165-9010112165/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 9010112165">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/BOLT-HEXAGON-9010112165-20079.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 9010112165">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/BOLT-HEXAGON-9010112165-20079.webp" alt="Toyota 9010112165" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">9011610171</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/bolt-stud-3-9011610171/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 9011610171">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/04/BOLT-STUD-17261-scaled.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 9011610171">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/04/BOLT-STUD-17261-scaled.webp" alt="Toyota 9011610171" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">9017811001</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/nut-flange-9017811001-9017811001/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 9017811001">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/08/NUT-FLANGE-9017811001-20036.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 9017811001">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/08/NUT-FLANGE-9017811001-20036.webp" alt="Toyota 9017811001" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">9094201121</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/nut-hub-w-washer-9094201121-9094201121/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 9094201121">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/NUT-HUB-WWASHER-9094201121-20032.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 9094201121">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/07/NUT-HUB-WWASHER-9094201121-20032.webp" alt="Toyota 9094201121" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">4342160060</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/flange-fr-axle-2-4342160060/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 4342160060">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/06/FLANGE-FR-AXLE-18456.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 4342160060">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/06/FLANGE-FR-AXLE-18456.webp" alt="Toyota 4342160060" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">4550309321</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/end-sub-assy-steeri-2-4550309321/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 4550309321">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2025/12/END-SUB-ASSY-STEERI-18039-scaled.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 4550309321">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2025/12/END-SUB-ASSY-STEERI-18039-scaled.webp" alt="Toyota 4550309321" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">4851069365</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/landcruiser-200-series-front-shock-4851069365/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 4851069365">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/05/4851069365-1-scaled.jpg" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 4851069365">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/05/4851069365-1-scaled.jpg" alt="Toyota 4851069365" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">4851080575</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/rh-front-shock-prius-zvw35-part-number-4851080575-4851080575/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 4851080575">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/05/20260512_125549-scaled.jpg" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 4851080575">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/05/20260512_125549-scaled.jpg" alt="Toyota 4851080575" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">485108Z035</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/camry-rh-front-shock-absorber-10-11-04-15-non-hybrid-485108z035-485108z035/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 485108Z035">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/05/20260512_131850-scaled.jpg" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 485108Z035">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/05/20260512_131850-scaled.jpg" alt="Toyota 485108Z035" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">4852059135</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/lhf-shock-absorber-for-yaris-90-series-08-2005-07-2011-4852059135-4852052141-4852059135/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 4852059135">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/05/20260512_130729-scaled.jpg" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 4852059135">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/05/20260512_130729-scaled.jpg" alt="Toyota 4852059135" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">488200K031</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/link-assy-fr-stabilizer-rh-488200k031/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 488200K031">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/06/LINK-ASSY-FR-STABILIZER-RH-18300.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 488200K031">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/06/LINK-ASSY-FR-STABILIZER-RH-18300.webp" alt="Toyota 488200K031" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">3121004050</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/cover-a-s-clutch-3121004050/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 3121004050">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/05/3121004050-Genuine-TOYOTA-Clutch-PressureThrust-Plate-31210-04050-14094.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 3121004050">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/05/3121004050-Genuine-TOYOTA-Clutch-PressureThrust-Plate-31210-04050-14094.webp" alt="Toyota 3121004050" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">3355560071</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/boot-shift-lever-3355560071/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 3355560071">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/06/BOOT-SHIFT-LEVER-14112.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 3355560071">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/06/BOOT-SHIFT-LEVER-14112.webp" alt="Toyota 3355560071" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="original">
+      <div class="details">
+        <span class="classification"><span class="brand">Toyota</span> · Оригинал</span>
+        <strong class="number">90366T0061</strong>
+        <a class="source" href="https://grandmotorstoyota.parts/product/bearing-tapered-rol-2-90366t0061/" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для Toyota 90366T0061">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://grandmotorstoyota.parts/wp-content/uploads/2026/06/BEARING-TAPERED-ROL-17521.webp" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото Toyota 90366T0061">
+        <img src="https://grandmotorstoyota.parts/wp-content/uploads/2026/06/BEARING-TAPERED-ROL-17521.webp" alt="Toyota 90366T0061" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">BOSCH</span> · Неоригинал</span>
+        <strong class="number">0 258 003 759</strong>
+        <a class="source" href="https://spareto.com/products/bosch-lambda-sensor/0-258-003-759" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для BOSCH 0 258 003 759">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images/000/429/427/original/converted-20230216-363987-133besi.jpg?1676557781" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото BOSCH 0 258 003 759">
+        <img src="https://cdn.spareto.com/variants/images/000/429/427/original/converted-20230216-363987-133besi.jpg?1676557781" alt="BOSCH 0 258 003 759" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">BOSCH</span> · Неоригинал</span>
+        <strong class="number">0 258 006 318</strong>
+        <a class="source" href="https://spareto.com/products/bosch-lambda-sensor/0-258-006-318" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для BOSCH 0 258 006 318">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/000/255/914/original/0-258-006-318-CC6D3758.webp?1794253927" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото BOSCH 0 258 006 318">
+        <img src="https://cdn.spareto.com/variants/images_webp/000/255/914/original/0-258-006-318-CC6D3758.webp?1794253927" alt="BOSCH 0 258 006 318" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">BOSCH</span> · Неоригинал</span>
+        <strong class="number">0 258 007 239</strong>
+        <a class="source" href="https://spareto.com/products/bosch-lambda-sensor/0-258-007-239" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для BOSCH 0 258 007 239">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images/000/429/231/original/converted-20230216-3231892-40xuch.jpg?1676577335" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото BOSCH 0 258 007 239">
+        <img src="https://cdn.spareto.com/variants/images/000/429/231/original/converted-20230216-3231892-40xuch.jpg?1676577335" alt="BOSCH 0 258 007 239" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">BOSCH</span> · Неоригинал</span>
+        <strong class="number">F 00H L00 255</strong>
+        <a class="source" href="https://spareto.com/products/bosch-lambda-sensor/f-00h-l00-255" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для BOSCH F 00H L00 255">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images/001/449/079/original/converted-20230219-125727-1wk7bns.jpg?1676835670" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото BOSCH F 00H L00 255">
+        <img src="https://cdn.spareto.com/variants/images/001/449/079/original/converted-20230219-125727-1wk7bns.jpg?1676835670" alt="BOSCH F 00H L00 255" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">FEBI BILSTEIN</span> · Неоригинал</span>
+        <strong class="number">02753</strong>
+        <a class="source" href="https://spareto.com/products/febi-bilstein-engine-mounting/02753" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для FEBI BILSTEIN 02753">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images/000/265/145/original/02753_1.jpg?1606227936" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото FEBI BILSTEIN 02753">
+        <img src="https://cdn.spareto.com/variants/images/000/265/145/original/02753_1.jpg?1606227936" alt="FEBI BILSTEIN 02753" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">FEBI BILSTEIN</span> · Неоригинал</span>
+        <strong class="number">14491</strong>
+        <a class="source" href="https://spareto.com/products/febi-bilstein-engine-mounting/14491" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для FEBI BILSTEIN 14491">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images/000/284/760/original/14491_1.jpg?1606230173" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото FEBI BILSTEIN 14491">
+        <img src="https://cdn.spareto.com/variants/images/000/284/760/original/14491_1.jpg?1606230173" alt="FEBI BILSTEIN 14491" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">FEBI BILSTEIN</span> · Неоригинал</span>
+        <strong class="number">32998</strong>
+        <a class="source" href="https://spareto.com/products/febi-bilstein-engine-mounting/32998" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для FEBI BILSTEIN 32998">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images/000/430/420/original/32998_1.jpg?1606247441" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото FEBI BILSTEIN 32998">
+        <img src="https://cdn.spareto.com/variants/images/000/430/420/original/32998_1.jpg?1606247441" alt="FEBI BILSTEIN 32998" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">GATES</span> · Неоригинал</span>
+        <strong class="number">KP15514XS-2</strong>
+        <a class="source" href="https://spareto.com/products/gates-water-pump-and-timing-belt-set/kp15514xs-2" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для GATES KP15514XS-2">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/001/595/901/original/kp15514xs-2-5FA02873.webp?1794453414" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото GATES KP15514XS-2">
+        <img src="https://cdn.spareto.com/variants/images_webp/001/595/901/original/kp15514xs-2-5FA02873.webp?1794453414" alt="GATES KP15514XS-2" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">DENSO</span> · Неоригинал</span>
+        <strong class="number">IRE01-27</strong>
+        <a class="source" href="https://spareto.com/products/denso-spark-plug/ire01-27" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для DENSO IRE01-27">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/005/745/720/original/ire01-27-A58F385E.webp?1793417350" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото DENSO IRE01-27">
+        <img src="https://cdn.spareto.com/variants/images_webp/005/745/720/original/ire01-27-A58F385E.webp?1793417350" alt="DENSO IRE01-27" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">DENSO</span> · Неоригинал</span>
+        <strong class="number">PK16PR-P11</strong>
+        <a class="source" href="https://spareto.com/products/denso-spark-plug/pk16pr-p11" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для DENSO PK16PR-P11">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/003/979/118/original/pk16pr-p11-8CC219F3.webp?1793423995" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото DENSO PK16PR-P11">
+        <img src="https://cdn.spareto.com/variants/images_webp/003/979/118/original/pk16pr-p11-8CC219F3.webp?1793423995" alt="DENSO PK16PR-P11" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">DENSO</span> · Неоригинал</span>
+        <strong class="number">U27ESR-N</strong>
+        <a class="source" href="https://spareto.com/products/denso-spark-plug/u27esr-n" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для DENSO U27ESR-N">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/005/746/148/original/u27esr-n-DAC392FB.webp?1793417638" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото DENSO U27ESR-N">
+        <img src="https://cdn.spareto.com/variants/images_webp/005/746/148/original/u27esr-n-DAC392FB.webp?1793417638" alt="DENSO U27ESR-N" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">DENSO</span> · Неоригинал</span>
+        <strong class="number">VX22BC</strong>
+        <a class="source" href="https://spareto.com/products/denso-spark-plug/vx22bc" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для DENSO VX22BC">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/003/217/793/original/vx22bc-1862A1AC.webp?1793424301" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото DENSO VX22BC">
+        <img src="https://cdn.spareto.com/variants/images_webp/003/217/793/original/vx22bc-1862A1AC.webp?1793424301" alt="DENSO VX22BC" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">NGK</span> · Неоригинал</span>
+        <strong class="number">48070</strong>
+        <a class="source" href="https://spareto.com/products/ngk-ignition-coil/u2018-48070" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для NGK 48070">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/000/555/303/original/u2018-48070-FEF330D2.webp?1793006953" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото NGK 48070">
+        <img src="https://cdn.spareto.com/variants/images_webp/000/555/303/original/u2018-48070-FEF330D2.webp?1793006953" alt="NGK 48070" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">NGK</span> · Неоригинал</span>
+        <strong class="number">48233</strong>
+        <a class="source" href="https://spareto.com/products/ngk-ignition-coil/u3017-48233" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для NGK 48233">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/000/560/557/original/u3017-48233-5859C3A3.webp?1793006964" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото NGK 48233">
+        <img src="https://cdn.spareto.com/variants/images_webp/000/560/557/original/u3017-48233-5859C3A3.webp?1793006964" alt="NGK 48233" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">NGK</span> · Неоригинал</span>
+        <strong class="number">48275</strong>
+        <a class="source" href="https://spareto.com/products/ngk-ignition-coil/u5088-48275" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для NGK 48275">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/000/571/294/original/u5088-48275-DAF5C4FB.webp?1793006984" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото NGK 48275">
+        <img src="https://cdn.spareto.com/variants/images_webp/000/571/294/original/u5088-48275-DAF5C4FB.webp?1793006984" alt="NGK 48275" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">NGK</span> · Неоригинал</span>
+        <strong class="number">48296</strong>
+        <a class="source" href="https://spareto.com/products/ngk-ignition-coil/u2064-48296" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для NGK 48296">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/000/566/640/original/u2064-48296-E306C70E.webp?1793006960" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото NGK 48296">
+        <img src="https://cdn.spareto.com/variants/images_webp/000/566/640/original/u2064-48296-E306C70E.webp?1793006960" alt="NGK 48296" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">NGK</span> · Неоригинал</span>
+        <strong class="number">6503</strong>
+        <a class="source" href="https://spareto.com/products/ngk-spark-plug/bkr5ekud-6503" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для NGK 6503">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/002/442/789/original/bkr5ekud-6503-F0F24CE5.webp?1793006717" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото NGK 6503">
+        <img src="https://cdn.spareto.com/variants/images_webp/002/442/789/original/bkr5ekud-6503-F0F24CE5.webp?1793006717" alt="NGK 6503" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">VALEO</span> · Неоригинал</span>
+        <strong class="number">506008</strong>
+        <a class="source" href="https://spareto.com/products/valeo-water-pump/506008" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для VALEO 506008">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/000/754/089/original/506008-708D4B92.webp?1794297464" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото VALEO 506008">
+        <img src="https://cdn.spareto.com/variants/images_webp/000/754/089/original/506008-708D4B92.webp?1794297464" alt="VALEO 506008" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">VALEO</span> · Неоригинал</span>
+        <strong class="number">506701</strong>
+        <a class="source" href="https://spareto.com/products/valeo-water-pump/506701" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для VALEO 506701">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/000/754/154/original/506701-590F275D.webp?1794297555" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото VALEO 506701">
+        <img src="https://cdn.spareto.com/variants/images_webp/000/754/154/original/506701-590F275D.webp?1794297555" alt="VALEO 506701" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">VALEO</span> · Неоригинал</span>
+        <strong class="number">506930</strong>
+        <a class="source" href="https://spareto.com/products/valeo-water-pump/506930" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для VALEO 506930">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/000/753/764/original/506930-A6BEF7E0.webp?1794297596" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото VALEO 506930">
+        <img src="https://cdn.spareto.com/variants/images_webp/000/753/764/original/506930-A6BEF7E0.webp?1794297596" alt="VALEO 506930" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">BILSTEIN</span> · Неоригинал</span>
+        <strong class="number">24-065160</strong>
+        <a class="source" href="https://spareto.com/products/bilstein-shock-absorber/24-065160" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для BILSTEIN 24-065160">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/000/745/875/original/24-065160-C98B3B93.webp?1793024928" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото BILSTEIN 24-065160">
+        <img src="https://cdn.spareto.com/variants/images_webp/000/745/875/original/24-065160-C98B3B93.webp?1793024928" alt="BILSTEIN 24-065160" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">BILSTEIN</span> · Неоригинал</span>
+        <strong class="number">35-140207</strong>
+        <a class="source" href="https://spareto.com/products/bilstein-shock-absorber/35-140207" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для BILSTEIN 35-140207">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/000/729/923/original/35-140207-1918D941.webp?1793025678" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото BILSTEIN 35-140207">
+        <img src="https://cdn.spareto.com/variants/images_webp/000/729/923/original/35-140207-1918D941.webp?1793025678" alt="BILSTEIN 35-140207" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">BILSTEIN</span> · Неоригинал</span>
+        <strong class="number">35-143338</strong>
+        <a class="source" href="https://spareto.com/products/bilstein-shock-absorber/35-143338" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для BILSTEIN 35-143338">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/000/744/818/original/35-143338-4090E5AD.webp?1793025691" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото BILSTEIN 35-143338">
+        <img src="https://cdn.spareto.com/variants/images_webp/000/744/818/original/35-143338-4090E5AD.webp?1793025691" alt="BILSTEIN 35-143338" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">BILSTEIN</span> · Неоригинал</span>
+        <strong class="number">35-171669</strong>
+        <a class="source" href="https://spareto.com/products/bilstein-shock-absorber/35-171669" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для BILSTEIN 35-171669">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/000/746/023/original/35-171669-0DA6FA19.webp?1793025708" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото BILSTEIN 35-171669">
+        <img src="https://cdn.spareto.com/variants/images_webp/000/746/023/original/35-171669-0DA6FA19.webp?1793025708" alt="BILSTEIN 35-171669" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">SACHS</span> · Неоригинал</span>
+        <strong class="number">115 007</strong>
+        <a class="source" href="https://spareto.com/products/sachs-shock-absorber/115-007" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для SACHS 115 007">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/000/745/410/original/115-007-DC527D21.webp?1794331121" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото SACHS 115 007">
+        <img src="https://cdn.spareto.com/variants/images_webp/000/745/410/original/115-007-DC527D21.webp?1794331121" alt="SACHS 115 007" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">SACHS</span> · Неоригинал</span>
+        <strong class="number">280 711</strong>
+        <a class="source" href="https://spareto.com/products/sachs-shock-absorber/280-711" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для SACHS 280 711">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/000/743/325/original/280-711-A17280B0.webp?1794333058" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото SACHS 280 711">
+        <img src="https://cdn.spareto.com/variants/images_webp/000/743/325/original/280-711-A17280B0.webp?1794333058" alt="SACHS 280 711" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">SACHS</span> · Неоригинал</span>
+        <strong class="number">312 947</strong>
+        <a class="source" href="https://spareto.com/products/sachs-shock-absorber/312-947" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для SACHS 312 947">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images/000/422/979/original/converted-20230219-418386-1njukw0.jpg?1676767806" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото SACHS 312 947">
+        <img src="https://cdn.spareto.com/variants/images/000/422/979/original/converted-20230219-418386-1njukw0.jpg?1676767806" alt="SACHS 312 947" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">SACHS</span> · Неоригинал</span>
+        <strong class="number">314 626</strong>
+        <a class="source" href="https://spareto.com/products/sachs-shock-absorber/314-626" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для SACHS 314 626">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/000/441/703/original/314-626-1C20B7C9.webp?1794334607" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото SACHS 314 626">
+        <img src="https://cdn.spareto.com/variants/images_webp/000/441/703/original/314-626-1C20B7C9.webp?1794334607" alt="SACHS 314 626" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">FEBI BILSTEIN</span> · Неоригинал</span>
+        <strong class="number">23911</strong>
+        <a class="source" href="https://spareto.com/products/febi-bilstein-tie-rod-end/23911" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для FEBI BILSTEIN 23911">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images/000/419/011/original/23911_1.jpg?1606246030" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото FEBI BILSTEIN 23911">
+        <img src="https://cdn.spareto.com/variants/images/000/419/011/original/23911_1.jpg?1606246030" alt="FEBI BILSTEIN 23911" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">FEBI BILSTEIN</span> · Неоригинал</span>
+        <strong class="number">25190</strong>
+        <a class="source" href="https://spareto.com/products/febi-bilstein-tie-rod-end/25190" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для FEBI BILSTEIN 25190">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images/000/246/895/original/25190_1.jpg?1606225839" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото FEBI BILSTEIN 25190">
+        <img src="https://cdn.spareto.com/variants/images/000/246/895/original/25190_1.jpg?1606225839" alt="FEBI BILSTEIN 25190" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">FEBI BILSTEIN</span> · Неоригинал</span>
+        <strong class="number">26153</strong>
+        <a class="source" href="https://spareto.com/products/febi-bilstein-tie-rod-end/26153" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для FEBI BILSTEIN 26153">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images/000/438/338/original/26153_1.jpg?1606248374" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото FEBI BILSTEIN 26153">
+        <img src="https://cdn.spareto.com/variants/images/000/438/338/original/26153_1.jpg?1606248374" alt="FEBI BILSTEIN 26153" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">FEBI BILSTEIN</span> · Неоригинал</span>
+        <strong class="number">32498</strong>
+        <a class="source" href="https://spareto.com/products/febi-bilstein-tie-rod-end/32498" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для FEBI BILSTEIN 32498">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images/000/272/153/original/32498_1.jpg?1606228734" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото FEBI BILSTEIN 32498">
+        <img src="https://cdn.spareto.com/variants/images/000/272/153/original/32498_1.jpg?1606228734" alt="FEBI BILSTEIN 32498" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">SKF</span> · Неоригинал</span>
+        <strong class="number">VKBA 3430</strong>
+        <a class="source" href="https://spareto.com/products/skf-wheel-bearing-kit/vkba-3430" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для SKF VKBA 3430">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images/000/732/206/original/vkba-3430.JPG?1610115693" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото SKF VKBA 3430">
+        <img src="https://cdn.spareto.com/variants/images/000/732/206/original/vkba-3430.JPG?1610115693" alt="SKF VKBA 3430" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">SKF</span> · Неоригинал</span>
+        <strong class="number">VKBA 3685</strong>
+        <a class="source" href="https://spareto.com/products/skf-wheel-bearing-kit/vkba-3685" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для SKF VKBA 3685">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images/000/247/219/original/vkba-3685.JPG?1610113571" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото SKF VKBA 3685">
+        <img src="https://cdn.spareto.com/variants/images/000/247/219/original/vkba-3685.JPG?1610113571" alt="SKF VKBA 3685" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">SKF</span> · Неоригинал</span>
+        <strong class="number">VKBA 3697</strong>
+        <a class="source" href="https://spareto.com/products/skf-wheel-bearing-kit/vkba-3697" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для SKF VKBA 3697">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images/000/275/476/original/vkba-3697.JPG?1610115604" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото SKF VKBA 3697">
+        <img src="https://cdn.spareto.com/variants/images/000/275/476/original/vkba-3697.JPG?1610115604" alt="SKF VKBA 3697" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">SKF</span> · Неоригинал</span>
+        <strong class="number">VKBA 3936</strong>
+        <a class="source" href="https://spareto.com/products/skf-wheel-bearing-kit/vkba-3936" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для SKF VKBA 3936">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images/000/744/800/original/vkba-3936.JPG?1610119250" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото SKF VKBA 3936">
+        <img src="https://cdn.spareto.com/variants/images/000/744/800/original/vkba-3936.JPG?1610119250" alt="SKF VKBA 3936" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">BREMBO</span> · Неоригинал</span>
+        <strong class="number">K 50 004</strong>
+        <a class="source" href="https://spareto.com/products/brembo-brake-shoe-set/k-50-004" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для BREMBO K 50 004">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/000/021/223/original/k-50-004-DDB2FEC4.webp?1793561337" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото BREMBO K 50 004">
+        <img src="https://cdn.spareto.com/variants/images_webp/000/021/223/original/k-50-004-DDB2FEC4.webp?1793561337" alt="BREMBO K 50 004" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">TRW</span> · Неоригинал</span>
+        <strong class="number">BHN587E</strong>
+        <a class="source" href="https://spareto.com/products/trw-brake-caliper/bhn587e" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для TRW BHN587E">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images/000/560/189/original/converted-20230218-991433-1xpnu0g.jpg?1676701819" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото TRW BHN587E">
+        <img src="https://cdn.spareto.com/variants/images/000/560/189/original/converted-20230218-991433-1xpnu0g.jpg?1676701819" alt="TRW BHN587E" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">TRW</span> · Неоригинал</span>
+        <strong class="number">BHQ916E</strong>
+        <a class="source" href="https://spareto.com/products/trw-brake-caliper/bhq916e" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для TRW BHQ916E">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images/001/717/458/original/bhq916e.jpg?1612273203" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото TRW BHQ916E">
+        <img src="https://cdn.spareto.com/variants/images/001/717/458/original/bhq916e.jpg?1612273203" alt="TRW BHQ916E" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">TRW</span> · Неоригинал</span>
+        <strong class="number">BHW144E</strong>
+        <a class="source" href="https://spareto.com/products/trw-brake-caliper/bhw144e" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для TRW BHW144E">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images/000/248/280/original/bhw144e.jpg?1612300098" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото TRW BHW144E">
+        <img src="https://cdn.spareto.com/variants/images/000/248/280/original/bhw144e.jpg?1612300098" alt="TRW BHW144E" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">TRW</span> · Неоригинал</span>
+        <strong class="number">BHX383E</strong>
+        <a class="source" href="https://spareto.com/products/trw-brake-caliper/bhx383e" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для TRW BHX383E">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images/000/437/525/original/bhx383e.jpg?1612303334" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото TRW BHX383E">
+        <img src="https://cdn.spareto.com/variants/images/000/437/525/original/bhx383e.jpg?1612303334" alt="TRW BHX383E" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">SKF</span> · Неоригинал</span>
+        <strong class="number">VKJA 3067</strong>
+        <a class="source" href="https://spareto.com/products/skf-joint-kit-drive-shaft/vkja-3067" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для SKF VKJA 3067">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images/000/754/489/original/vkja-3067.JPG?1610146866" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото SKF VKJA 3067">
+        <img src="https://cdn.spareto.com/variants/images/000/754/489/original/vkja-3067.JPG?1610146866" alt="SKF VKJA 3067" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">SKF</span> · Неоригинал</span>
+        <strong class="number">VKJA 3127</strong>
+        <a class="source" href="https://spareto.com/products/skf-joint-kit-drive-shaft/vkja-3127" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для SKF VKJA 3127">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images/000/754/417/original/vkja-3127.JPG?1610146662" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото SKF VKJA 3127">
+        <img src="https://cdn.spareto.com/variants/images/000/754/417/original/vkja-3127.JPG?1610146662" alt="SKF VKJA 3127" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">SKF</span> · Неоригинал</span>
+        <strong class="number">VKJA 5141</strong>
+        <a class="source" href="https://spareto.com/products/skf-joint-kit-drive-shaft/vkja-5141" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для SKF VKJA 5141">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images/000/753/615/original/vkja-5141.JPG?1610144694" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото SKF VKJA 5141">
+        <img src="https://cdn.spareto.com/variants/images/000/753/615/original/vkja-5141.JPG?1610144694" alt="SKF VKJA 5141" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">BOSCH</span> · Неоригинал</span>
+        <strong class="number">1 987 429 125</strong>
+        <a class="source" href="https://spareto.com/products/bosch-air-filter/1-987-429-125" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для BOSCH 1 987 429 125">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/000/404/385/original/1-987-429-125-70B0BB0B.webp?1794466783" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото BOSCH 1 987 429 125">
+        <img src="https://cdn.spareto.com/variants/images_webp/000/404/385/original/1-987-429-125-70B0BB0B.webp?1794466783" alt="BOSCH 1 987 429 125" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">MANN-FILTER</span> · Неоригинал</span>
+        <strong class="number">C 20 019</strong>
+        <a class="source" href="https://spareto.com/products/mann-filter-filter-interior-air/c-20-019" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для MANN-FILTER C 20 019">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/001/139/789/original/c-20-019-16FDE1C8.webp?1793830521" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото MANN-FILTER C 20 019">
+        <img src="https://cdn.spareto.com/variants/images_webp/001/139/789/original/c-20-019-16FDE1C8.webp?1793830521" alt="MANN-FILTER C 20 019" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">MANN-FILTER</span> · Неоригинал</span>
+        <strong class="number">C 25 034</strong>
+        <a class="source" href="https://spareto.com/products/mann-filter-air-filter/c-25-034" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для MANN-FILTER C 25 034">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/001/575/672/original/c-25-034-286832B7.webp?1793830593" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото MANN-FILTER C 25 034">
+        <img src="https://cdn.spareto.com/variants/images_webp/001/575/672/original/c-25-034-286832B7.webp?1793830593" alt="MANN-FILTER C 25 034" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">MANN-FILTER</span> · Неоригинал</span>
+        <strong class="number">C 25 990/1</strong>
+        <a class="source" href="https://spareto.com/products/mann-filter-air-filter/c-25-990-1" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для MANN-FILTER C 25 990/1">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/001/298/954/original/c-25-990-1-D516BAAB.webp?1793830612" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото MANN-FILTER C 25 990/1">
+        <img src="https://cdn.spareto.com/variants/images_webp/001/298/954/original/c-25-990-1-D516BAAB.webp?1793830612" alt="MANN-FILTER C 25 990/1" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">MANN-FILTER</span> · Неоригинал</span>
+        <strong class="number">C 27 030</strong>
+        <a class="source" href="https://spareto.com/products/mann-filter-air-filter/c-27-030" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для MANN-FILTER C 27 030">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/001/575/676/original/c-27-030-120533E4.webp?1793830639" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото MANN-FILTER C 27 030">
+        <img src="https://cdn.spareto.com/variants/images_webp/001/575/676/original/c-27-030-120533E4.webp?1793830639" alt="MANN-FILTER C 27 030" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+    <li class="part" data-group="aftermarket">
+      <div class="details">
+        <span class="classification"><span class="brand">MANN-FILTER</span> · Неоригинал</span>
+        <strong class="number">CUK 2648</strong>
+        <a class="source" href="https://spareto.com/products/mann-filter-filter-interior-air/cuk-2648" target="_blank" rel="noopener noreferrer" aria-label="Открыть источник для MANN-FILTER CUK 2648">Источник&nbsp;↗</a>
+      </div>
+      <a class="photo" href="https://cdn.spareto.com/variants/images_webp/001/576/881/original/cuk-2648-C2B53194.webp?1793831069" target="_blank" rel="noopener noreferrer" aria-label="Открыть фото MANN-FILTER CUK 2648">
+        <img src="https://cdn.spareto.com/variants/images_webp/001/576/881/original/cuk-2648-C2B53194.webp?1793831069" alt="MANN-FILTER CUK 2648" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+      </a>
+    </li>
+  </ul>
+</main>
+<script>
+const toolbar = document.getElementById("toolbar");
+const search = document.getElementById("search");
+const empty = document.getElementById("empty");
+const status = document.getElementById("status");
+const heading = document.querySelector("header");
+const buttons = [...toolbar.querySelectorAll("button")];
+const normalize = (value) => value.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+const parts = [...document.querySelectorAll(".part")].map(element => ({
+  element,
+  group: element.dataset.group,
+  text: normalize(element.querySelector(".number").textContent + " " + element.querySelector(".brand").textContent)
+}));
+let group = "all";
+
+function updateList() {
+  const query = normalize(search.value);
+  let shown = 0;
+  for (const part of parts) {
+    const visible = (group === "all" || part.group === group) && part.text.includes(query);
+    part.element.hidden = !visible;
+    if (visible) shown++;
+  }
+  empty.hidden = shown !== 0;
+  status.textContent = "Показано: " + shown;
+  if (window.scrollY > heading.offsetHeight) window.scrollTo(0, heading.offsetHeight);
+}
+
+for (const button of buttons) {
+  button.addEventListener("click", () => {
+    group = button.dataset.filter;
+    for (const control of buttons) control.setAttribute("aria-pressed", String(control === button));
+    updateList();
+  });
+}
+search.addEventListener("input", updateList);
+toolbar.hidden = false;
+updateList();
+</script>
+</body>
+</html>
